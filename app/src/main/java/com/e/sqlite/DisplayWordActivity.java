@@ -1,15 +1,19 @@
 package com.e.sqlite;
 
+import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import java.lang.reflect.Array;
+import java.net.Inet4Address;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,8 +21,10 @@ import java.util.List;
 import helper.MyHelper;
 import model.Word;
 
-public class DisplayWordActivity extends AppCompatActivity {
+public class DisplayWordActivity extends AppCompatActivity implements View.OnClickListener{
     private ListView firstWord;
+    private EditText etSearch;
+    private Button btnSearch, btnAdd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,13 +32,15 @@ public class DisplayWordActivity extends AppCompatActivity {
         setContentView(R.layout.activity_display_word);
 
         firstWord = findViewById(R.id.firstWord);
+        etSearch = findViewById(R.id.etSearch);
+        btnSearch = findViewById(R.id.btnSearch);
+        btnAdd = findViewById(R.id.btnAdd);
         LoadWord();
 
         firstWord.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                System.out.println("sarita");
-//                Toast.makeText(DisplayMeaningActivity.this, "Successful", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(DisplayWordActivity.this, DisplayMeaningActivity.class));
             }
         });
 
@@ -46,7 +54,7 @@ public class DisplayWordActivity extends AppCompatActivity {
         wordList = myHelper.GetAllWords(sqLiteDatabase);
 
 
-        HashMap<String, String> hashMap = new HashMap<>();
+        final HashMap<String, String> hashMap = new HashMap<>();
 
         for (int i = 0;i< wordList.size(); i++){
             hashMap.put(wordList.get(i).getWord(), wordList.get(i).getMeaning());
@@ -60,7 +68,64 @@ public class DisplayWordActivity extends AppCompatActivity {
         );
         firstWord.setAdapter(stringArrayAdapter);
 
+        firstWord.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String key = parent.getItemAtPosition(position).toString();
+                String meaning = hashMap.get(key);
+                Intent intent = new Intent(DisplayWordActivity.this, DisplayMeaningActivity.class);
+                intent.putExtra("meaning", meaning);
+                startActivity(intent);
+            }
+        });
+
+    }
+
+    private void SearchWord(){
+        final MyHelper myHelper = new MyHelper(this);
+        final SQLiteDatabase sqLiteDatabase = myHelper.getWritableDatabase();
+
+        List<Word> wordList = new ArrayList<>();
+        wordList = myHelper.GetWordByName(etSearch.getText().toString(), sqLiteDatabase);
+
+        final HashMap<String, String> hashMap = new HashMap<>();
+
+        for (int i = 0;i< wordList.size(); i++){
+            hashMap.put(wordList.get(i).getWord(), wordList.get(i).getMeaning());
+        }
+
+        ArrayAdapter<String> stringArrayAdapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_list_item_1,
+                new ArrayList<String>(hashMap.keySet())
+
+        );
+        firstWord.setAdapter(stringArrayAdapter);
+
+        firstWord.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String key = parent.getItemAtPosition(position).toString();
+                String meaning = hashMap.get(key);
+                Intent intent = new Intent(DisplayWordActivity.this, DisplayMeaningActivity.class);
+                intent.putExtra("meaning", meaning);
+                startActivity(intent);
+            }
+        });
+
+
     }
 
 
+    @Override
+    public void onClick(View v) {
+        if(v.getId()==R.id.btnSearch){
+            SearchWord();
+        }
+        else if(v.getId()==R.id.btnAdd){
+            Intent intent = new Intent(DisplayWordActivity.this, MainActivity.class);
+            startActivity(intent);
+        }
+
+    }
 }
